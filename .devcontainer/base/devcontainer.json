@@ -5,8 +5,9 @@
     "docker-compose.devcontainer.yaml"
   ],
   "service": "isaac-lab-base",
-  "workspaceFolder": "/workspace",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/isaaclab,type=bind,consistency=cached",
+  "workspaceFolder": "/groot_ws",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/groot_ws,type=bind,consistency=cached",
+  "postCreateCommand": "mkdir -p /groot_ws/src && ln -sfn /workspace/isaaclab /groot_ws/src/isaaclab",
   "overrideCommand": false,
   "shutdownAction": "stopCompose",
   "remoteEnv": {

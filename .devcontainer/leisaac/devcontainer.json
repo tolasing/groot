@@ -5,9 +5,9 @@
     "docker-compose.devcontainer.yaml"
   ],
   "service": "isaac-lab-leisaac",
-  "workspaceFolder": "/workspace",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/leisaac,type=bind,consistency=cached",
-  "postCreateCommand": "bash -c 'LEISAAC=/workspace/leisaac && RELEASE=https://github.com/LightwheelAI/leisaac/releases/download/v0.1.0 && mkdir -p $LEISAAC/assets/robot $LEISAAC/assets/scenes && { [ -f $LEISAAC/assets/robot/so101_follower.usd ] && echo \"robot usd already present\" || curl -fL $RELEASE/so101_follower.usd -o $LEISAAC/assets/robot/so101_follower.usd; } && { [ -d $LEISAAC/assets/scenes/kitchen_with_orange ] && echo \"scene already present\" || { TMP=$(mktemp -d) && curl -fL $RELEASE/kitchen_with_orange.zip -o $TMP/k.zip && unzip -q $TMP/k.zip -d $LEISAAC/assets/scenes/ && rm -rf $TMP; }; }'",
+  "workspaceFolder": "/groot_ws",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/groot_ws,type=bind,consistency=cached",
+  "postCreateCommand": "bash -c 'mkdir -p /groot_ws/src && ln -sfn /workspace/isaaclab /groot_ws/src/isaaclab && ln -sfn /workspace/leisaac /groot_ws/src/leisaac && LEISAAC=/workspace/leisaac && RELEASE=https://github.com/LightwheelAI/leisaac/releases/download/v0.1.0 && mkdir -p $LEISAAC/assets/robot $LEISAAC/assets/scenes && { [ -f $LEISAAC/assets/robot/so101_follower.usd ] && echo \"robot usd already present\" || curl -fL $RELEASE/so101_follower.usd -o $LEISAAC/assets/robot/so101_follower.usd; } && { [ -d $LEISAAC/assets/scenes/kitchen_with_orange ] && echo \"scene already present\" || { TMP=$(mktemp -d) && curl -fL $RELEASE/kitchen_with_orange.zip -o $TMP/k.zip && unzip -q $TMP/k.zip -d $LEISAAC/assets/scenes/ && rm -rf $TMP; }; }'",
   "overrideCommand": false,
   "shutdownAction": "stopCompose",
   "remoteEnv": {
