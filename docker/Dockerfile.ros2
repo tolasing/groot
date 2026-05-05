@@ -37,3 +37,6 @@ RUN --mount=type=cache,target=/var/cache/apt \
 # Copy the RMW specifications for ROS2
 # https://docs.isaacsim.omniverse.nvidia.com/latest/installation/install_ros.html
 COPY docker/.ros/ ${DOCKER_USER_HOME}/.ros/
+
+RUN mkdir -p /groot_ws && \
+    git config --global --add safe.directory /groot_ws

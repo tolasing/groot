@@ -1,3 +1,7 @@
 services:
   isaac-lab-ros2:
     profiles: []
+    volumes:
+      - type: bind
+        source: ../../
+        target: /groot_ws
