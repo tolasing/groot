@@ -1,0 +1,29 @@
+{
+  "name": "Isaac Lab — LeIsaac",
+  "dockerComposeFile": [
+    "../../docker/docker-compose.yaml",
+    "docker-compose.devcontainer.yaml"
+  ],
+  "service": "isaac-lab-leisaac",
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/leisaac,type=bind,consistency=cached",
+  "postCreateCommand": "bash /workspace/leisaac/.devcontainer/leisaac/setup-assets.sh",
+  "overrideCommand": false,
+  "shutdownAction": "stopCompose",
+  "remoteEnv": {
+    "ISAACSIM_PATH": "/workspace/isaaclab/_isaac_sim",
+    "OMNI_KIT_ALLOW_ROOT": "1"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "anthropic.claude-code"
+      ]
+    }
+  }
+}

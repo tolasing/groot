@@ -1,0 +1,29 @@
+{
+  "name": "Isaac Lab — ROS2",
+  "dockerComposeFile": [
+    "../../docker/docker-compose.yaml",
+    "docker-compose.devcontainer.yaml"
+  ],
+  "service": "isaac-lab-ros2",
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace/isaaclab,type=bind,consistency=cached",
+  "overrideCommand": false,
+  "shutdownAction": "stopCompose",
+  "remoteEnv": {
+    "ISAACSIM_PATH": "/workspace/isaaclab/_isaac_sim",
+    "OMNI_KIT_ALLOW_ROOT": "1"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "ms-iot.vscode-ros",
+        "anthropic.claude-code"
+      ]
+    }
+  }
+}

@@ -1,0 +1,3 @@
+services:
+  isaac-lab-leisaac:
+    profiles: []
