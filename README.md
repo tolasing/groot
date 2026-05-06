@@ -22,51 +22,69 @@ The first milestone is bringing three simulation stacks together into a single u
 
 ---
 
-## Getting Started with Docker
+## Prerequisites
 
-The repo ships three Docker profiles — `base`, `ros2`, and `leisaac`. Use `container.py` to build and start whichever you need.
-
-### 1. Build an image
-
-```bash
-python docker/container.py start base      # Isaac Sim + Isaac Lab only
-python docker/container.py start ros2      # adds ROS2 Humble
-python docker/container.py start leisaac   # adds LeIsaac on top of base
-```
-
-### 2. Enter the container
-
-```bash
-python docker/container.py enter base      # or ros2 / leisaac
-```
-
-### 3. Stop the container
-
-```bash
-python docker/container.py stop base       # or ros2 / leisaac
-```
+- [Docker](https://docs.docker.com/engine/install/) with NVIDIA Container Toolkit
+- [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+- NVIDIA GPU with drivers installed
 
 ---
 
-## Dev Container (VS Code)
+## Getting Started
 
-A devcontainer is configured for each profile under `.devcontainer/`. Open the repo in VS Code and run:
+### First time setup
 
-**`Ctrl+Shift+P` → Dev Containers: Reopen in Container**
+```
+Ctrl+Shift+P → Dev Containers: Rebuild and Reopen in Container
+```
 
-VS Code will show a picker — choose **Base**, **ROS2**, or **LeIsaac**. The container opens directly into `/workspace`.
+VS Code will show a picker — choose your profile:
 
-> On first launch of the **LeIsaac** devcontainer, a `postCreateCommand` automatically downloads and places the LeIsaac assets:
+| Option | Includes |
+|--------|---------|
+| **GROOT — Base** | Isaac Sim + Isaac Lab |
+| **GROOT — ROS2** | Isaac Sim + Isaac Lab + ROS2 Humble |
+| **GROOT — LeIsaac** | Isaac Sim + Isaac Lab + LeIsaac |
+
+This builds the Docker image and opens the container. Only needed once or after Dockerfile changes.
+
+### Daily use
+
+```
+Ctrl+Shift+P → Dev Containers: Reopen in Container
+```
+
+Starts the existing container and attaches — no rebuild needed.
+
+---
+
+## Workspace Layout
+
+Inside the container:
+
+```
+/groot_ws/              ← VS Code opens here (groot git repo, full git access)
+├── src/
+│   ├── isaaclab/       ← symlink to /workspace/isaaclab
+│   ├── leisaac/        ← symlink to /workspace/leisaac  (LeIsaac only)
+│   └── <your code>     ← tracked in this repo, pushable to GitHub
+├── .devcontainer/
+├── docker/
+└── ...
+```
+
+> **LeIsaac first launch:** the devcontainer automatically downloads:
 > - `so101_follower.usd` → `/workspace/leisaac/assets/robot/`
 > - `kitchen_with_orange` scene → `/workspace/leisaac/assets/scenes/`
 
 ---
 
-## Isaac Sim Version
+## Branches
 
-| Branch / Version | Isaac Sim |
-|------------------|-----------|
-| `main`           | 5.1.0     |
+| Branch | Isaac Sim | Purpose |
+|--------|-----------|---------|
+| `main` | 5.1.0 | Stable development |
+| `develop` | 6.0 (upstream Isaac Lab) | Testing CloudXR streaming with Meta Quest 3S |
 
 ---
 
