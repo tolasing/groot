@@ -101,6 +101,7 @@ services:
     environment: *default-isaac-lab-environment
     volumes: *default-isaac-lab-volumes
     network_mode: host
+    privileged: true
     deploy: *default-isaac-lab-deploy
     # This is the entrypoint for the container
     entrypoint: bash

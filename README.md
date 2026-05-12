@@ -24,9 +24,65 @@ The first milestone is bringing three simulation stacks together into a single u
 
 ## Prerequisites
 
-- [Docker](https://docs.docker.com/engine/install/) with NVIDIA Container Toolkit
+- Docker (see install steps below) with NVIDIA Container Toolkit
 - [VS Code](https://code.visualstudio.com/) with the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 - NVIDIA GPU with drivers installed
+
+### Install Docker
+
+**Using the convenience script:**
+
+```bash
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+```
+
+**Post-install steps (run Docker without sudo):**
+
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+**Verify:**
+
+```bash
+docker run hello-world
+```
+
+### Install NVIDIA Container Toolkit
+
+**Configure the repository:**
+
+```bash
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+    && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+    sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+    sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list \
+    && \
+    sudo apt-get update
+```
+
+**Install the packages:**
+
+```bash
+sudo apt-get install -y nvidia-container-toolkit
+sudo systemctl restart docker
+```
+
+**Configure the container runtime:**
+
+```bash
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
+```
+
+**Verify:**
+
+```bash
+docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
+```
 
 ---
 
@@ -85,6 +141,33 @@ Inside the container:
 |--------|-----------|---------|
 | `main` | 5.1.0 | Stable development |
 | `develop` | 6.0 (upstream Isaac Lab) | Testing CloudXR streaming with Meta Quest 3S |
+
+---
+
+## Troubleshooting
+
+### `dpkg` lock held by `unattended-upgr`
+
+**Error:**
+
+```
+E: Could not get lock /var/lib/dpkg/lock-frontend. It is held by process <PID> (unattended-upgr)
+E: Unable to acquire the dpkg frontend lock (/var/lib/dpkg/lock-frontend), is another process using it?
+```
+
+**Cause:** Ubuntu's `unattended-upgrades` service is running in the background and holds the package manager lock.
+
+**Fix:** Wait for it to finish, then retry:
+
+```bash
+sudo wait-for-it /var/lib/dpkg/lock-frontend; sudo apt-get install -y <package>
+```
+
+Or wait manually:
+
+```bash
+while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do sleep 3; done
+```
 
 ---
 
