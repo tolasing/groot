@@ -158,6 +158,27 @@ services:
     stdin_open: true
     tty: true
 
+  # This service adds GR00T support on top of leisaac
+  isaac-lab-groot:
+    profiles: [ "groot" ]
+    env_file:
+      - .env.base
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.groot
+      network: host
+      args:
+        - DOCKER_NAME_SUFFIX=${DOCKER_NAME_SUFFIX-}
+    image: isaac-lab-groot${DOCKER_NAME_SUFFIX-}
+    container_name: isaac-lab-groot${DOCKER_NAME_SUFFIX-}
+    environment: *default-isaac-lab-environment
+    volumes: *default-isaac-lab-volumes
+    network_mode: host
+    deploy: *default-isaac-lab-deploy
+    entrypoint: bash
+    stdin_open: true
+    tty: true
+
 volumes:
   # isaac-sim
   isaac-cache-kit:

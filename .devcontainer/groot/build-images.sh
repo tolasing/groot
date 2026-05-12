@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds isaac-lab-base then isaac-lab-leisaac before the devcontainer starts.
+# Builds isaac-lab-base → isaac-lab-leisaac → isaac-lab-groot before the devcontainer starts.
 # Runs on the HOST via devcontainer initializeCommand.
 set -e
 
@@ -28,14 +28,11 @@ docker build \
     -t isaac-lab-leisaac \
     "${REPO_ROOT}"
 
-# Build groot image only if explicitly requested
-if [[ "${BUILD_GROOT:-0}" == "1" ]]; then
-    echo "[devcontainer] Building isaac-lab-groot..."
-    docker build \
-        --network host \
-        -f "${REPO_ROOT}/docker/Dockerfile.groot" \
-        -t isaac-lab-groot \
-        "${REPO_ROOT}"
-fi
+echo "[devcontainer] Building isaac-lab-groot..."
+docker build \
+    --network host \
+    -f "${REPO_ROOT}/docker/Dockerfile.groot" \
+    -t isaac-lab-groot \
+    "${REPO_ROOT}"
 
 echo "[devcontainer] Images ready."
