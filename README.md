@@ -40,7 +40,7 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 ```
 
-**Post-install steps (run Docker without sudo):**
+**Post-install steps:**
 
 ```bash
 sudo groupadd docker
@@ -106,16 +106,6 @@ VS Code will show a picker — choose your profile:
 | **GROOT — LeIsaac** | Isaac Sim + Isaac Lab + LeIsaac |
 
 This builds the Docker image and opens the container. Only needed once or after Dockerfile changes.
-
-### Daily use
-
-```
-Ctrl+Shift+P → Dev Containers: Reopen in Container
-```
-
-Starts the existing container and attaches — no rebuild needed.
-
----
 
 ## Workspace Layout
 
