@@ -15,6 +15,22 @@ The first milestone is bringing three simulation stacks together into a single u
 
 ---
 
+## Table of Contents
+
+- [Stack Overview](#stack-overview)
+- [Prerequisites](#prerequisites)
+  - [Install Docker](#install-docker)
+  - [Install NVIDIA Container Toolkit](#install-nvidia-container-toolkit)
+- [Getting Started](#getting-started)
+- [Workspace Layout](#workspace-layout)
+- [Branches](#branches)
+- [Gamepad Teleoperation](#gamepad-teleoperation)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
+- [Acknowledgement](#acknowledgement)
+
+---
+
 ## Stack Overview
 
 | Component | Role |
