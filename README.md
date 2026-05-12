@@ -6,9 +6,11 @@
 
 **Groot** is a project to train a Vision-Language-Action (VLA) model for robot manipulation.
 The first milestone is bringing three simulation stacks together into a single unified environment:
-[NVIDIA Isaac Sim](https://docs.isaacsim.omniverse.nvidia.com/latest/index.html),
-[Isaac Lab](https://github.com/isaac-sim/IsaacLab), and
-[LeIsaac](https://github.com/LightwheelAI/leisaac) — using these as the data generation and training backbone for Groot.
+1.[NVIDIA Isaac Sim](https://docs.isaacsim.omniverse.nvidia.com/latest/index.html)
+
+2.[Isaac Lab](https://github.com/isaac-sim/IsaacLab)
+
+3.[LeIsaac](https://github.com/LightwheelAI/leisaac) — using these as the data generation and training backbone for Groot.
 
 ---
 
