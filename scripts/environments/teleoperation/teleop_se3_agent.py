@@ -30,7 +30,7 @@ parser.add_argument(
     ),
 )
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
-parser.add_argument("--sensitivity", type=float, default=1.0, help="Sensitivity factor.")
+parser.add_argument("--sensitivity", type=float, default=100.0, help="Sensitivity factor.")
 parser.add_argument(
     "--enable_pinocchio",
     action="store_true",
@@ -64,7 +64,16 @@ import logging
 import gymnasium as gym
 import torch
 
-from isaaclab.devices import Se3Gamepad, Se3GamepadCfg, Se3Keyboard, Se3KeyboardCfg, Se3SpaceMouse, Se3SpaceMouseCfg
+from isaaclab.devices import (
+    Se3Gamepad,
+    Se3GamepadCfg,
+    Se3GamepadPygame,
+    Se3GamepadPygameCfg,
+    Se3Keyboard,
+    Se3KeyboardCfg,
+    Se3SpaceMouse,
+    Se3SpaceMouseCfg,
+)
 from isaaclab.devices.openxr import remove_camera_configs
 from isaaclab.devices.teleop_device_factory import create_teleop_device
 from isaaclab.envs import ManagerBasedRLEnvCfg
@@ -208,8 +217,16 @@ def main() -> None:
                     Se3SpaceMouseCfg(pos_sensitivity=0.05 * sensitivity, rot_sensitivity=0.05 * sensitivity)
                 )
             elif args_cli.teleop_device.lower() == "gamepad":
-                teleop_interface = Se3Gamepad(
-                    Se3GamepadCfg(pos_sensitivity=0.1 * sensitivity, rot_sensitivity=0.1 * sensitivity)
+                # Use pygame-based reader: works in headless/livestream without window focus.
+                # Disable gripper term if the env action space is 6D (no gripper).
+                action_dim = env.action_space.shape[0]
+                teleop_interface = Se3GamepadPygame(
+                    Se3GamepadPygameCfg(
+                        pos_sensitivity=0.1 * sensitivity,
+                        rot_sensitivity=0.1 * sensitivity,
+                        sim_device=args_cli.device,
+                        gripper_term=action_dim > 6,
+                    )
                 )
             else:
                 logger.error(f"Unsupported teleop device: {args_cli.teleop_device}")

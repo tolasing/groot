@@ -1,13 +1,17 @@
 {
   "name": "Isaac Lab — Base",
   "dockerComposeFile": [
-    "../../docker/docker-compose.yaml",
     "docker-compose.devcontainer.yaml"
   ],
+  "initializeCommand": "bash ${localWorkspaceFolder}/.devcontainer/base/build-images.sh",
   "service": "isaac-lab-base",
   "workspaceFolder": "/groot_ws",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
   "mounts": [
-    "source=${localWorkspaceFolder},target=/groot_ws,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder},target=/groot_ws,type=bind,consistency=cached",
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
   "postCreateCommand": "git config --global --add safe.directory /groot_ws && mkdir -p /groot_ws/src && ln -sfn /workspace/isaaclab /groot_ws/src/isaaclab",
   "overrideCommand": false,

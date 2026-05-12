@@ -7,3 +7,4 @@
 
 from .se2_gamepad import Se2Gamepad, Se2GamepadCfg
 from .se3_gamepad import Se3Gamepad, Se3GamepadCfg
+from .se3_gamepad_pygame import Se3GamepadPygame, Se3GamepadPygameCfg

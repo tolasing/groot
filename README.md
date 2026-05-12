@@ -144,6 +144,74 @@ Inside the container:
 
 ---
 
+## Gamepad Teleoperation
+
+Gamepad input is forwarded from your local machine to the cloud instance over SSH using USB/IP.
+
+### 1. On your laptop — share the gamepad
+
+Find your gamepad's bus ID:
+
+```bash
+usbip list -l
+```
+
+Look for your controller in the output (e.g. `Xbox 360 Controller`). Note the bus ID (e.g. `5-1`).
+
+```bash
+sudo modprobe usbip-core
+sudo modprobe usbip-host
+sudo usbip bind --busid 5-1          # replace 5-1 with your actual bus ID
+sudo nohup usbipd > /tmp/usbipd.log 2>&1 &
+```
+
+Then open the SSH tunnel (keep this terminal open):
+
+```bash
+ssh -R 3240:localhost:3240 root@<cloud-ip>
+```
+
+### 2. On the cloud machine — attach the device
+
+```bash
+sudo usbip attach -r 127.0.0.1 -b 5-1    # replace 5-1 with the same bus ID
+```
+
+Verify the gamepad is visible:
+
+```bash
+ls /dev/input/    # should show js0
+```
+
+> **Note:** The bus ID (`5-1`) may differ on your machine. Always check with `usbip list -l` first.  
+> If the gamepad was attached *after* the container was started, recreate the container so the device is whitelisted in the kernel cgroup:
+> ```bash
+> docker rm -f isaac-lab-leisaac
+> # then re-run the docker run command with --device /dev/input
+> ```
+
+### 3. Run teleoperation
+
+```bash
+docker exec -it isaac-lab-leisaac bash -c "cd /workspace/isaaclab && \
+  ./isaaclab.sh -p /groot_ws/scripts/environments/teleoperation/teleop_se3_agent.py \
+  --task=Isaac-Deploy-GearAssembly-UR10e-2F140-v0 \
+  --teleop_device=gamepad \
+  --num_envs=1 --device=cuda --livestream 2"
+```
+
+For LeIsaac tasks (SO-101 robot):
+
+```bash
+docker exec -it isaac-lab-leisaac bash -c "cd /workspace/leisaac && \
+  /workspace/isaaclab/isaaclab.sh -p scripts/environments/teleoperation/teleop_se3_agent.py \
+  --task=LeIsaac-SO101-PickOrange-v0 \
+  --teleop_device=gamepad \
+  --num_envs=1 --device=cuda --livestream 2"
+```
+
+---
+
 ## Troubleshooting
 
 ### `dpkg` lock held by `unattended-upgr`

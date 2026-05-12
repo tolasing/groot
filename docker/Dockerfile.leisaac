@@ -19,6 +19,14 @@ RUN --mount=type=cache,target=${DOCKER_USER_HOME}/.cache/pip \
 RUN --mount=type=cache,target=${DOCKER_USER_HOME}/.cache/pip \
     ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install -e /workspace/leisaac/source/leisaac
 
+# Patch isaaclab with pygame-based gamepad device (works in headless/livestream)
+COPY source/isaaclab/isaaclab/devices/gamepad/se3_gamepad_pygame.py \
+     /workspace/isaaclab/source/isaaclab/isaaclab/devices/gamepad/se3_gamepad_pygame.py
+RUN echo '\nfrom .se3_gamepad_pygame import Se3GamepadPygame, Se3GamepadPygameCfg' \
+        >> /workspace/isaaclab/source/isaaclab/isaaclab/devices/gamepad/__init__.py && \
+    sed -i 's/from .gamepad import Se2Gamepad, Se2GamepadCfg, Se3Gamepad, Se3GamepadCfg/from .gamepad import Se2Gamepad, Se2GamepadCfg, Se3Gamepad, Se3GamepadCfg, Se3GamepadPygame, Se3GamepadPygameCfg/' \
+        /workspace/isaaclab/source/isaaclab/isaaclab/devices/__init__.py
+
 # Set workspace root so both isaaclab/ and leisaac/ are visible side by side
 RUN mkdir -p /groot_ws && \
     git config --global --add safe.directory /groot_ws
