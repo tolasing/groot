@@ -4,7 +4,7 @@
 FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PYTHONPATH=/workspace
+ENV PYTHONPATH=/groot_ws/groot
 
 # System dependencies
 RUN apt-get update && \
@@ -20,14 +20,6 @@ RUN apt-get update && \
 RUN pip install --upgrade pip setuptools
 RUN pip install gpustat wandb==0.19.0
 
-# Clone Isaac-GR00T at the n1.5-release tag
-RUN git clone --branch n1.5-release https://github.com/NVIDIA/Isaac-GR00T.git /workspace
-
-WORKDIR /workspace
-
-# Install base dependencies from pyproject.toml
-RUN pip install -e .[base]
-
 # Remove transformer-engine to avoid conflict, then install flash-attn
 RUN pip uninstall -y transformer-engine
 RUN pip install flash_attn==2.7.1.post4 --no-build-isolation --force-reinstall
@@ -37,10 +29,8 @@ RUN pip uninstall -y opencv-python opencv-python-headless || true && \
     rm -rf /usr/local/lib/python3.10/dist-packages/cv2 || true && \
     pip install opencv-python==4.8.0.74
 
-# Force-reinstall torch to pinned versions after base install
+# Pin torch — must come after flash-attn build
 RUN pip install --force-reinstall torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 numpy==1.26.4
 
-# Install remaining package without re-resolving deps, then full install
-RUN pip install -e . --no-deps
-RUN pip install accelerate>=0.26.0
-RUN pip3 install -e .
+# Source-dependent installs (pip install -e) are handled by postCreateCommand
+# after the /groot_ws bind-mount is in place.

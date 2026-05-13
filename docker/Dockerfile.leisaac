@@ -6,7 +6,7 @@ ARG DOCKER_NAME_SUFFIX=""
 FROM isaac-lab-base${DOCKER_NAME_SUFFIX} AS leisaac
 
 # Clone leisaac with all submodules (includes its own IsaacLab dependency tree)
-RUN git clone https://github.com/LightwheelAI/leisaac.git --recursive /workspace/leisaac
+RUN git clone https://github.com/tolasing/leisaac.git --recursive /workspace/leisaac
 
 # Point leisaac's bundled IsaacLab at the same Isaac Sim installation
 RUN ln -sf ${ISAACSIM_ROOT_PATH} /workspace/leisaac/dependencies/IsaacLab/_isaac_sim
@@ -19,6 +19,9 @@ RUN --mount=type=cache,target=${DOCKER_USER_HOME}/.cache/pip \
 RUN --mount=type=cache,target=${DOCKER_USER_HOME}/.cache/pip \
     ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install -e /workspace/leisaac/source/leisaac
 
+# Install GR00T dependencies
+RUN --mount=type=cache,target=${DOCKER_USER_HOME}/.cache/pip \
+    ${ISAACLAB_PATH}/isaaclab.sh -p -m pip install -e "/workspace/leisaac/source/leisaac[gr00t]"
 
 
 # Patch isaaclab with pygame-based gamepad device (works in headless/livestream)
