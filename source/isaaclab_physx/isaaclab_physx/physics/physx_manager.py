@@ -199,6 +199,13 @@ class PhysxManager(PhysicsManager):
     _message_bus = _event_bus
 
     @classmethod
+    def _get_backend_utils(cls):
+        # Delegate to the original SimulationManager which holds the backend state.
+        from isaacsim.core.simulation_manager.impl.simulation_manager import SimulationManager as _SM
+
+        return _SM._get_backend_utils()
+
+    @classmethod
     def initialize(cls, sim_context: SimulationContext) -> None:
         """Initialize the physics manager."""
         from isaaclab.sim.utils.stage import get_current_stage_id
