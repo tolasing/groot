@@ -35,137 +35,45 @@ from isaaclab_tasks.manager_based.locomanipulation.pick_place.configs.pink_contr
 def _build_g1_locomanipulation_pipeline():
     """Build an IsaacTeleop retargeting pipeline for G1 locomanipulation teleoperation.
 
-    Uses optical hand tracking (HandsSource) for wrist pose control via Se3AbsRetargeters,
-    pinch-based finger closure detection via HandTrackingFingerRetargeter for hand joint
-    control, and a fixed locomotion command (standing still) since hand tracking provides
-    no thumbstick input.
+    Uses VR motion controllers (ControllersSource) for wrist pose control via
+    Se3AbsRetargeters, TriHandMotionControllerRetargeters for hand joint control
+    from controller buttons, and a fixed locomotion command (standing still).
 
     Returns:
         OutputCombiner with a single "action" output containing the flattened
         32D action tensor: [left_wrist(7), right_wrist(7), hand_joints(14), locomotion(4)].
     """
-    import numpy as np
-
     from isaacteleop.retargeters import (
         LocomotionFixedRootCmdRetargeter,
         LocomotionFixedRootCmdRetargeterConfig,
         Se3AbsRetargeter,
         Se3RetargeterConfig,
         TensorReorderer,
+        TriHandMotionControllerConfig,
+        TriHandMotionControllerRetargeter,
     )
-    from isaacteleop.retargeting_engine.deviceio_source_nodes import HandsSource
-    from isaacteleop.retargeting_engine.interface import BaseRetargeter, OutputCombiner, ValueInput
-    from isaacteleop.retargeting_engine.interface.retargeter_core_types import RetargeterIO, RetargeterIOType
-    from isaacteleop.retargeting_engine.interface.tensor_group_type import OptionalType
-    from isaacteleop.retargeting_engine.tensor_types import (
-        HandInput,
-        HandInputIndex,
-        HandJointIndex,
-        RobotHandJoints,
-        TransformMatrix,
-    )
+    from isaacteleop.retargeting_engine.deviceio_source_nodes import ControllersSource
+    from isaacteleop.retargeting_engine.interface import OutputCombiner, ValueInput
+    from isaacteleop.retargeting_engine.tensor_types import TransformMatrix
 
-    class HandTrackingFingerRetargeter(BaseRetargeter):
-        """Maps optical hand tracking pinch/curl to G1 TriHand 7-DOF joint angles.
-
-        Measures thumb-to-index-tip distance for pinch (trigger analog) and
-        middle-tip-to-wrist distance for curl (squeeze analog), then applies
-        the same joint mapping as TriHandMotionControllerRetargeter.
-        """
-
-        # Pinch distance thresholds (meters)
-        PINCH_OPEN_M: float = 0.08
-        PINCH_CLOSE_M: float = 0.02
-        # Middle-tip to wrist distance thresholds (meters)
-        CURL_OPEN_M: float = 0.20
-        CURL_CLOSE_M: float = 0.10
-        # Joint scale factors (mirror TriHandMotionControllerRetargeter)
-        THUMB_PROXIMAL_SCALE: float = 0.4
-        THUMB_DISTAL_SCALE: float = 0.7
-        THUMB_ROTATION_SCALE: float = 0.5
-
-        def __init__(self, hand_side: str, hand_joint_names: list, name: str) -> None:
-            self._hand_side = hand_side.lower()
-            self._hand_joint_names = hand_joint_names
-            self._is_left = self._hand_side == "left"
-            super().__init__(name=name)
-
-        def input_spec(self) -> RetargeterIOType:
-            return {f"hand_{self._hand_side}": OptionalType(HandInput())}
-
-        def output_spec(self) -> RetargeterIOType:
-            return {"hand_joints": RobotHandJoints(f"hand_joints_{self._hand_side}", self._hand_joint_names)}
-
-        def _compute_fn(self, inputs: RetargeterIO, outputs: RetargeterIO, context) -> None:
-            output_group = outputs["hand_joints"]
-            hand_group = inputs[f"hand_{self._hand_side}"]
-
-            if hand_group.is_none:
-                for i in range(len(self._hand_joint_names)):
-                    output_group[i] = 0.0
-                return
-
-            joint_positions = np.from_dlpack(hand_group[HandInputIndex.JOINT_POSITIONS])
-            joint_valid = np.from_dlpack(hand_group[HandInputIndex.JOINT_VALID])
-
-            # Pinch (thumb tip ↔ index tip distance) → trigger analog [0, 1]
-            trigger = 0.0
-            if joint_valid[HandJointIndex.THUMB_TIP] and joint_valid[HandJointIndex.INDEX_TIP]:
-                dist = float(np.linalg.norm(
-                    joint_positions[HandJointIndex.THUMB_TIP] - joint_positions[HandJointIndex.INDEX_TIP]
-                ))
-                trigger = 1.0 - float(np.clip(
-                    (dist - self.PINCH_CLOSE_M) / (self.PINCH_OPEN_M - self.PINCH_CLOSE_M), 0.0, 1.0
-                ))
-
-            # Curl (middle tip ↔ wrist distance) → squeeze analog [0, 1]
-            squeeze = 0.0
-            if joint_valid[HandJointIndex.MIDDLE_TIP] and joint_valid[HandJointIndex.WRIST]:
-                mid_dist = float(np.linalg.norm(
-                    joint_positions[HandJointIndex.MIDDLE_TIP] - joint_positions[HandJointIndex.WRIST]
-                ))
-                squeeze = 1.0 - float(np.clip(
-                    (mid_dist - self.CURL_CLOSE_M) / (self.CURL_OPEN_M - self.CURL_CLOSE_M), 0.0, 1.0
-                ))
-
-            # Same joint mapping as TriHandMotionControllerRetargeter
-            hand_joints = np.zeros(7, dtype=np.float32)
-            thumb_button = max(trigger, squeeze)
-            thumb_rotation = self.THUMB_ROTATION_SCALE * trigger - self.THUMB_ROTATION_SCALE * squeeze
-            if not self._is_left:
-                thumb_rotation = -thumb_rotation
-            hand_joints[0] = thumb_rotation
-            hand_joints[1] = -thumb_button * self.THUMB_PROXIMAL_SCALE
-            hand_joints[2] = -thumb_button * self.THUMB_DISTAL_SCALE
-            hand_joints[3] = trigger
-            hand_joints[4] = trigger
-            hand_joints[5] = squeeze
-            hand_joints[6] = squeeze
-
-            if self._is_left:
-                hand_joints = -hand_joints
-
-            for i in range(min(len(self._hand_joint_names), 7)):
-                output_group[i] = float(hand_joints[i])
-
-    # Create input sources (hand trackers are auto-discovered from pipeline)
-    hands = HandsSource(name="hands")
+    # Create input sources (controllers are auto-discovered from pipeline)
+    controllers = ControllersSource(name="controllers")
 
     # External input: world-to-anchor 4x4 transform matrix provided by IsaacTeleopDevice
     transform_input = ValueInput("world_T_anchor", TransformMatrix())
 
-    # Apply the coordinate-frame transform to hand joint poses so that
+    # Apply the coordinate-frame transform to controller poses so that
     # downstream retargeters receive data in the simulation world frame.
-    transformed_hands = hands.transformed(transform_input.output(ValueInput.VALUE))
+    transformed_controllers = controllers.transformed(transform_input.output(ValueInput.VALUE))
 
     # -------------------------------------------------------------------------
-    # SE3 Absolute Pose Retargeters (left and right wrists from hand tracking)
+    # SE3 Absolute Pose Retargeters (left and right wrists from controllers)
     # -------------------------------------------------------------------------
     left_se3_cfg = Se3RetargeterConfig(
-        input_device=HandsSource.LEFT,
+        input_device=ControllersSource.LEFT,
         zero_out_xy_rotation=False,
-        use_wrist_rotation=True,
-        use_wrist_position=True,
+        use_wrist_rotation=False,
+        use_wrist_position=False,
         target_offset_roll=45.0,
         target_offset_pitch=180.0,
         target_offset_yaw=-90.0,
@@ -173,15 +81,15 @@ def _build_g1_locomanipulation_pipeline():
     left_se3 = Se3AbsRetargeter(left_se3_cfg, name="left_ee_pose")
     connected_left_se3 = left_se3.connect(
         {
-            HandsSource.LEFT: transformed_hands.output(HandsSource.LEFT),
+            ControllersSource.LEFT: transformed_controllers.output(ControllersSource.LEFT),
         }
     )
 
     right_se3_cfg = Se3RetargeterConfig(
-        input_device=HandsSource.RIGHT,
+        input_device=ControllersSource.RIGHT,
         zero_out_xy_rotation=False,
-        use_wrist_rotation=True,
-        use_wrist_position=True,
+        use_wrist_rotation=False,
+        use_wrist_position=False,
         target_offset_roll=-135.0,
         target_offset_pitch=0.0,
         target_offset_yaw=90.0,
@@ -189,12 +97,12 @@ def _build_g1_locomanipulation_pipeline():
     right_se3 = Se3AbsRetargeter(right_se3_cfg, name="right_ee_pose")
     connected_right_se3 = right_se3.connect(
         {
-            HandsSource.RIGHT: transformed_hands.output(HandsSource.RIGHT),
+            ControllersSource.RIGHT: transformed_controllers.output(ControllersSource.RIGHT),
         }
     )
 
     # -------------------------------------------------------------------------
-    # Hand Tracking Finger Retargeters (pinch/curl → G1 TriHand 7-DOF angles)
+    # TriHand Motion Controller Retargeters (controller buttons → G1 TriHand 7-DOF angles)
     # -------------------------------------------------------------------------
     # Joint names matching G1 TriHand 7-DOF output order:
     #   [thumb_rotation, thumb_proximal, thumb_distal,
@@ -209,26 +117,26 @@ def _build_g1_locomanipulation_pipeline():
         "middle_distal",
     ]
 
-    left_finger = HandTrackingFingerRetargeter(
-        hand_side="left",
+    left_trihand_cfg = TriHandMotionControllerConfig(
         hand_joint_names=hand_joint_names,
-        name="finger_left",
+        controller_side="left",
     )
-    connected_left_finger = left_finger.connect(
-        {HandsSource.LEFT: transformed_hands.output(HandsSource.LEFT)}
+    left_trihand = TriHandMotionControllerRetargeter(left_trihand_cfg, name="trihand_left")
+    connected_left_trihand = left_trihand.connect(
+        {ControllersSource.LEFT: transformed_controllers.output(ControllersSource.LEFT)}
     )
 
-    right_finger = HandTrackingFingerRetargeter(
-        hand_side="right",
+    right_trihand_cfg = TriHandMotionControllerConfig(
         hand_joint_names=hand_joint_names,
-        name="finger_right",
+        controller_side="right",
     )
-    connected_right_finger = right_finger.connect(
-        {HandsSource.RIGHT: transformed_hands.output(HandsSource.RIGHT)}
+    right_trihand = TriHandMotionControllerRetargeter(right_trihand_cfg, name="trihand_right")
+    connected_right_trihand = right_trihand.connect(
+        {ControllersSource.RIGHT: transformed_controllers.output(ControllersSource.RIGHT)}
     )
 
     # -------------------------------------------------------------------------
-    # Locomotion Root Command (fixed standing — no thumbstick with hand tracking)
+    # Locomotion Root Command (fixed standing)
     # -------------------------------------------------------------------------
     locomotion_cfg = LocomotionFixedRootCmdRetargeterConfig(hip_height=0.72)
     locomotion = LocomotionFixedRootCmdRetargeter(locomotion_cfg, name="locomotion")
@@ -241,7 +149,7 @@ def _build_g1_locomanipulation_pipeline():
     left_ee_elements = ["l_pos_x", "l_pos_y", "l_pos_z", "l_quat_x", "l_quat_y", "l_quat_z", "l_quat_w"]
     right_ee_elements = ["r_pos_x", "r_pos_y", "r_pos_z", "r_quat_x", "r_quat_y", "r_quat_z", "r_quat_w"]
 
-    # Hand finger retargeter outputs 7 scalars per hand (positionally mapped):
+    # TriHand outputs 7 scalars per hand (positionally mapped):
     #   [thumb_rotation, thumb_proximal, thumb_distal,
     #    index_proximal, index_distal, middle_proximal, middle_distal]
     left_hand_elements = [
@@ -317,8 +225,8 @@ def _build_g1_locomanipulation_pipeline():
         {
             "left_ee_pose": connected_left_se3.output("ee_pose"),
             "right_ee_pose": connected_right_se3.output("ee_pose"),
-            "left_hand_joints": connected_left_finger.output("hand_joints"),
-            "right_hand_joints": connected_right_finger.output("hand_joints"),
+            "left_hand_joints": connected_left_trihand.output("hand_joints"),
+            "right_hand_joints": connected_right_trihand.output("hand_joints"),
             "locomotion": connected_locomotion.output("root_command"),
         }
     )
