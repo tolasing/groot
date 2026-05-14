@@ -1,0 +1,47 @@
+{
+    "name": "IsaacLab XR",
+    "dockerComposeFile": "../docker/docker-compose.yaml",
+    "service": "isaac-lab-base",
+    "workspaceFolder": "/workspace/isaaclab",
+
+    // Environment variables applied on top of docker/.env.base
+    "remoteEnv": {
+        "NV_CXR_ENABLE_PUSH_DEVICES": "0",
+        "OMNI_KIT_ALLOW_ROOT": "1"
+    },
+
+    // VS Code extensions to install inside the container
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.pylance",
+                "ms-python.black-formatter",
+                "charliermarsh.ruff",
+                "ms-vscode.cpptools",
+                "twxs.cmake",
+                "eamodio.gitlens",
+                "mhutchie.git-graph",
+                "ms-azuretools.vscode-docker",
+                "njpwerner.autodocstring"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/workspace/isaaclab/_isaac_sim/python.sh",
+                "editor.formatOnSave": true,
+                "editor.rulers": [120],
+                "files.trimTrailingWhitespace": true
+            }
+        }
+    },
+
+    // Forward ports used by Isaac Sim and CloudXR
+    "forwardPorts": [
+        8211,   // Isaac Sim streaming
+        49100,  // CloudXR signaling
+        48322   // CloudXR WSS proxy
+    ],
+
+    "postCreateCommand": "echo 'IsaacLab XR devcontainer ready'",
+
+    "remoteUser": "root"
+}
