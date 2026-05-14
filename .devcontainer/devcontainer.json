@@ -1,14 +1,31 @@
 {
     "name": "IsaacLab XR",
-    "dockerComposeFile": "../docker/docker-compose.yaml",
-    "service": "isaac-lab-base",
+    "build": {
+        "dockerfile": "../docker/Dockerfile.base",
+        "context": "..",
+        "args": {
+            "ISAACSIM_BASE_IMAGE_ARG": "nvcr.io/nvidia/isaac-sim",
+            "ISAACSIM_VERSION_ARG": "6.0.0-dev2",
+            "ISAACSIM_ROOT_PATH_ARG": "/isaac-sim",
+            "ISAACLAB_PATH_ARG": "/workspace/isaaclab",
+            "DOCKER_USER_HOME_ARG": "/root"
+        }
+    },
     "workspaceFolder": "/workspace/isaaclab",
 
-    // Environment variables applied on top of docker/.env.base
+    // Environment variables set inside the container
     "remoteEnv": {
         "NV_CXR_ENABLE_PUSH_DEVICES": "0",
-        "OMNI_KIT_ALLOW_ROOT": "1"
+        "OMNI_KIT_ALLOW_ROOT": "1",
+        "ISAACSIM_PATH": "/workspace/isaaclab/_isaac_sim"
     },
+
+    // NVIDIA GPU access
+    "runArgs": [
+        "--gpus", "all",
+        "--network", "host",
+        "--privileged"
+    ],
 
     // VS Code extensions to install inside the container
     "customizations": {
